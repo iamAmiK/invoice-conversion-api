@@ -1,48 +1,305 @@
-{"_D":"urn:oasis:names:specification:ubl:schema:xsd:Invoice-2",
- "_A":"urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2",
- "_B":"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2",
- "Invoice":[{
- "ID":[{"_":"123"}],
- "IssueDate":[{"_":"2011-09-22"}],
- "Note":[{"_":"Test",
-  "languageID":"en"},
- {"_":"Tester",
-  "languageID":"fr"}],
- "InvoicePeriod":[{
-  "StartDate":[{"_":"2011-08-01"}],
-  "EndDate":[{"_":"2011-08-31"}]
- }],
- "AccountingSupplierParty":[{
-  "Party":[{
-   "PartyName":[{
-    "Name":[{"_":"Custom Cotter Pins"}]
-   }]
-  }]
- }],
- "AccountingCustomerParty":[{
-  "Party":[{
-   "PartyName":[{
-    "Name":[{"_":"North American Veeblefetzer"}]
-   }]
-  }]
- }],
- "LegalMonetaryTotal":[{
-  "PayableAmount":[{"_":100.00,
-   "currencyID":"CAD"}]
- }],
- "InvoiceLine":[{
-  "ID":[{"_":"1"}],
-  "LineExtensionAmount":[{"_":100.00,
-   "currencyID":"CAD"}],
-  "Item":[{
-   "Description":[{"_":"Cotter pin, MIL-SPEC"}]
-  }]
- },{
-  "ID":[{"_":"2"}],
-  "LineExtensionAmount":[{"_":200.00,
-   "currencyID":"CAD"}],
-  "Item":[{
-   "Description":[{"_":"Axel"}]
-  }]
- }]
-}]}
+{
+  "invoiceType": "json",
+  "outputFormat": "UBL XML",
+  "invoiceData": {
+    "_D": "urn:oasis:names:specification:ubl:schema:xsd:Invoice-2",
+    "_A": "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2",
+    "_B": "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2",
+    "Invoice": [{
+      "UBLVersionID": [{"_": "2.1"}],
+      "ID": [{"_": "INV-2024-001"}],
+      "IssueDate": [{"_": "2024-09-04"}],
+      "DueDate": [{"_": "2024-10-04"}],
+      "InvoiceTypeCode": [{
+        "_": "380",
+        "listID": "UN/ECE 1001 Subset"
+      }],
+      "Note": [{
+        "_": "Payment terms: Net 30 days",
+        "languageID": "en"
+      }],
+      "DocumentCurrencyCode": [{
+        "_": "USD",
+        "listID": "ISO 4217 Alpha"
+      }],
+      "BuyerReference": [{"_": "PO-2024-456"}],
+      "AccountingSupplierParty": [{
+        "Party": [{
+          "EndpointID": [{
+            "_": "7300010000001",
+            "schemeID": "GLN"
+          }],
+          "PartyIdentification": [{
+            "ID": [{
+              "_": "SUPP001",
+              "schemeID": "ZZZ"
+            }]
+          }],
+          "PartyName": [{
+            "Name": [{"_": "Acme Corp Ltd"}]
+          }],
+          "PostalAddress": [{
+            "StreetName": [{"_": "123 Business Street"}],
+            "CityName": [{"_": "New York"}],
+            "PostalZone": [{"_": "10001"}],
+            "CountrySubentity": [{"_": "NY"}],
+            "Country": [{
+              "IdentificationCode": [{
+                "_": "US",
+                "listID": "ISO3166-1"
+              }]
+            }]
+          }],
+          "PartyTaxScheme": [{
+            "CompanyID": [{
+              "_": "US123456789",
+              "schemeID": "USVAT"
+            }],
+            "TaxScheme": [{
+              "ID": [{
+                "_": "VAT",
+                "schemeID": "UN/ECE 5153"
+              }]
+            }]
+          }],
+          "PartyLegalEntity": [{
+            "RegistrationName": [{"_": "Acme Corporation Limited"}],
+            "CompanyID": [{
+              "_": "123456789",
+              "schemeID": "US:EIN"
+            }]
+          }],
+          "Contact": [{
+            "Telephone": [{"_": "+1-555-123-4567"}],
+            "ElectronicMail": [{"_": "billing@acmecorp.com"}]
+          }]
+        }]
+      }],
+      "AccountingCustomerParty": [{
+        "Party": [{
+          "EndpointID": [{
+            "_": "7300010000002",
+            "schemeID": "GLN"
+          }],
+          "PartyIdentification": [{
+            "ID": [{
+              "_": "CUST001",
+              "schemeID": "ZZZ"
+            }]
+          }],
+          "PartyName": [{
+            "Name": [{"_": "ABC Manufacturing Inc"}]
+          }],
+          "PostalAddress": [{
+            "StreetName": [{"_": "456 Industrial Ave"}],
+            "CityName": [{"_": "Los Angeles"}],
+            "PostalZone": [{"_": "90210"}],
+            "CountrySubentity": [{"_": "CA"}],
+            "Country": [{
+              "IdentificationCode": [{
+                "_": "US",
+                "listID": "ISO3166-1"
+              }]
+            }]
+          }],
+          "PartyTaxScheme": [{
+            "CompanyID": [{
+              "_": "US987654321",
+              "schemeID": "USVAT"
+            }],
+            "TaxScheme": [{
+              "ID": [{
+                "_": "VAT",
+                "schemeID": "UN/ECE 5153"
+              }]
+            }]
+          }],
+          "PartyLegalEntity": [{
+            "RegistrationName": [{"_": "ABC Manufacturing Incorporated"}],
+            "CompanyID": [{
+              "_": "987654321",
+              "schemeID": "US:EIN"
+            }]
+          }],
+          "Contact": [{
+            "Telephone": [{"_": "+1-555-987-6543"}],
+            "ElectronicMail": [{"_": "purchasing@abcmanufacturing.com"}]
+          }]
+        }]
+      }],
+      "PaymentMeans": [{
+        "PaymentMeansCode": [{
+          "_": "31",
+          "listID": "UN/ECE 4461"
+        }],
+        "PaymentID": [{"_": "INV-2024-001"}],
+        "PayeeFinancialAccount": [{
+          "ID": [{"_": "US1234567890123456"}],
+          "FinancialInstitutionBranch": [{
+            "FinancialInstitution": [{
+              "ID": [{"_": "BANKUS33"}]
+            }]
+          }]
+        }]
+      }],
+      "TaxTotal": [{
+        "TaxAmount": [{
+          "_": 150.00,
+          "currencyID": "USD"
+        }],
+        "TaxSubtotal": [{
+          "TaxableAmount": [{
+            "_": 1500.00,
+            "currencyID": "USD"
+          }],
+          "TaxAmount": [{
+            "_": 150.00,
+            "currencyID": "USD"
+          }],
+          "TaxCategory": [{
+            "ID": [{
+              "_": "S",
+              "schemeID": "UN/ECE 5305"
+            }],
+            "Percent": [{"_": 10.00}],
+            "TaxScheme": [{
+              "ID": [{
+                "_": "VAT",
+                "schemeID": "UN/ECE 5153"
+              }]
+            }]
+          }]
+        }]
+      }],
+      "LegalMonetaryTotal": [{
+        "LineExtensionAmount": [{
+          "_": 1500.00,
+          "currencyID": "USD"
+        }],
+        "TaxExclusiveAmount": [{
+          "_": 1500.00,
+          "currencyID": "USD"
+        }],
+        "TaxInclusiveAmount": [{
+          "_": 1650.00,
+          "currencyID": "USD"
+        }],
+        "PayableAmount": [{
+          "_": 1650.00,
+          "currencyID": "USD"
+        }]
+      }],
+      "InvoiceLine": [{
+        "ID": [{"_": "1"}],
+        "InvoicedQuantity": [{
+          "_": 10,
+          "unitCode": "EA"
+        }],
+        "LineExtensionAmount": [{
+          "_": 1000.00,
+          "currencyID": "USD"
+        }],
+        "TaxTotal": [{
+          "TaxAmount": [{
+            "_": 100.00,
+            "currencyID": "USD"
+          }]
+        }],
+        "Item": [{
+          "Description": [{
+            "_": "High-quality industrial widgets",
+            "languageID": "EN"
+          }],
+          "Name": [{"_": "Industrial Widget Model A"}],
+          "SellersItemIdentification": [{
+            "ID": [{"_": "WIDGET-A-001"}]
+          }],
+          "StandardItemIdentification": [{
+            "ID": [{
+              "_": "1234567890123",
+              "schemeID": "GTIN"
+            }]
+          }],
+          "ClassifiedTaxCategory": [{
+            "ID": [{
+              "_": "S",
+              "schemeID": "UN/ECE 5305"
+            }],
+            "Percent": [{"_": 10.00}],
+            "TaxScheme": [{
+              "ID": [{
+                "_": "VAT",
+                "schemeID": "UN/ECE 5153"
+              }]
+            }]
+          }]
+        }],
+        "Price": [{
+          "PriceAmount": [{
+            "_": 100.00,
+            "currencyID": "USD"
+          }],
+          "BaseQuantity": [{
+            "_": 1,
+            "unitCode": "EA"
+          }]
+        }]
+      }, {
+        "ID": [{"_": "2"}],
+        "InvoicedQuantity": [{
+          "_": 5,
+          "unitCode": "EA"
+        }],
+        "LineExtensionAmount": [{
+          "_": 500.00,
+          "currencyID": "USD"
+        }],
+        "TaxTotal": [{
+          "TaxAmount": [{
+            "_": 50.00,
+            "currencyID": "USD"
+          }]
+        }],
+        "Item": [{
+          "Description": [{
+            "_": "Premium industrial components",
+            "languageID": "EN"
+          }],
+          "Name": [{"_": "Industrial Component Model B"}],
+          "SellersItemIdentification": [{
+            "ID": [{"_": "COMP-B-002"}]
+          }],
+          "StandardItemIdentification": [{
+            "ID": [{
+              "_": "9876543210987",
+              "schemeID": "GTIN"
+            }]
+          }],
+          "ClassifiedTaxCategory": [{
+            "ID": [{
+              "_": "S",
+              "schemeID": "UN/ECE 5305"
+            }],
+            "Percent": [{"_": 10.00}],
+            "TaxScheme": [{
+              "ID": [{
+                "_": "VAT",
+                "schemeID": "UN/ECE 5153"
+              }]
+            }]
+          }]
+        }],
+        "Price": [{
+          "PriceAmount": [{
+            "_": 100.00,
+            "currencyID": "USD"
+          }],
+          "BaseQuantity": [{
+            "_": 1,
+            "unitCode": "EA"
+          }]
+        }]
+      }]
+    }]
+  }
+}

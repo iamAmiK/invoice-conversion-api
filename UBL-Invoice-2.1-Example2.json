@@ -1,0 +1,321 @@
+{
+  "_D": "urn:oasis:names:specification:ubl:schema:xsd:Invoice-2",
+  "_S": "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2",
+  "_B": "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2",
+  "Invoice": [{
+    "UBLVersionID": [{"IdentifierContent": "2.1"}],
+    "ID": [{"IdentifierContent": "INV-2024-001"}],
+    "IssueDate": [{"DateContent": "2024-09-04"}],
+    "DueDate": [{"DateContent": "2024-10-04"}],
+    "InvoiceTypeCode": [{
+      "CodeContent": "380",
+      "CodeListIdentifier": "UN/ECE 1001 Subset",
+      "CodeListAgencyIdentifier": "6"
+    }],
+    "Note": [{
+      "TextContent": "Payment terms: Net 30 days",
+      "LanguageIdentifier": "en"
+    }],
+    "DocumentCurrencyCode": [{
+      "CodeContent": "USD",
+      "CodeListIdentifier": "ISO 4217 Alpha",
+      "CodeListAgencyIdentifier": "6"
+    }],
+    "BuyerReference": [{"TextContent": "PO-2024-456"}],
+    "AccountingSupplierParty": [{
+      "Party": [{
+        "EndpointID": [{
+          "IdentifierContent": "7300010000001",
+          "IdentificationSchemeIdentifier": "GLN",
+          "IdentificationSchemeAgencyIdentifier": "9"
+        }],
+        "PartyIdentification": [{
+          "ID": [{
+            "IdentifierContent": "SUPP001",
+            "IdentificationSchemeIdentifier": "ZZZ"
+          }]
+        }],
+        "PartyName": [{
+          "Name": [{"TextContent": "Acme Corp Ltd"}]
+        }],
+        "PostalAddress": [{
+          "StreetName": [{"TextContent": "123 Business Street"}],
+          "CityName": [{"TextContent": "New York"}],
+          "PostalZone": [{"TextContent": "10001"}],
+          "CountrySubentity": [{"TextContent": "NY"}],
+          "Country": [{
+            "IdentificationCode": [{
+              "CodeContent": "US",
+              "CodeListIdentifier": "ISO3166-1",
+              "CodeListAgencyIdentifier": "6"
+            }]
+          }]
+        }],
+        "PartyTaxScheme": [{
+          "CompanyID": [{
+            "IdentifierContent": "US123456789",
+            "IdentificationSchemeIdentifier": "USVAT",
+            "IdentificationSchemeAgencyIdentifier": "ZZZ"
+          }],
+          "TaxScheme": [{
+            "ID": [{
+              "IdentifierContent": "VAT",
+              "IdentificationSchemeIdentifier": "UN/ECE 5153",
+              "IdentificationSchemeAgencyIdentifier": "6"
+            }]
+          }]
+        }],
+        "PartyLegalEntity": [{
+          "RegistrationName": [{"TextContent": "Acme Corporation Limited"}],
+          "CompanyID": [{
+            "IdentifierContent": "123456789",
+            "IdentificationSchemeIdentifier": "US:EIN",
+            "IdentificationSchemeAgencyIdentifier": "ZZZ"
+          }]
+        }],
+        "Contact": [{
+          "Telephone": [{"TextContent": "+1-555-123-4567"}],
+          "ElectronicMail": [{"TextContent": "billing@acmecorp.com"}]
+        }]
+      }]
+    }],
+    "AccountingCustomerParty": [{
+      "Party": [{
+        "EndpointID": [{
+          "IdentifierContent": "7300010000002",
+          "IdentificationSchemeIdentifier": "GLN",
+          "IdentificationSchemeAgencyIdentifier": "9"
+        }],
+        "PartyIdentification": [{
+          "ID": [{
+            "IdentifierContent": "CUST001",
+            "IdentificationSchemeIdentifier": "ZZZ"
+          }]
+        }],
+        "PartyName": [{
+          "Name": [{"TextContent": "ABC Manufacturing Inc"}]
+        }],
+        "PostalAddress": [{
+          "StreetName": [{"TextContent": "456 Industrial Ave"}],
+          "CityName": [{"TextContent": "Los Angeles"}],
+          "PostalZone": [{"TextContent": "90210"}],
+          "CountrySubentity": [{"TextContent": "CA"}],
+          "Country": [{
+            "IdentificationCode": [{
+              "CodeContent": "US",
+              "CodeListIdentifier": "ISO3166-1",
+              "CodeListAgencyIdentifier": "6"
+            }]
+          }]
+        }],
+        "PartyTaxScheme": [{
+          "CompanyID": [{
+            "IdentifierContent": "US987654321",
+            "IdentificationSchemeIdentifier": "USVAT",
+            "IdentificationSchemeAgencyIdentifier": "ZZZ"
+          }],
+          "TaxScheme": [{
+            "ID": [{
+              "IdentifierContent": "VAT",
+              "IdentificationSchemeIdentifier": "UN/ECE 5153",
+              "IdentificationSchemeAgencyIdentifier": "6"
+            }]
+          }]
+        }],
+        "PartyLegalEntity": [{
+          "RegistrationName": [{"TextContent": "ABC Manufacturing Incorporated"}],
+          "CompanyID": [{
+            "IdentifierContent": "987654321",
+            "IdentificationSchemeIdentifier": "US:EIN",
+            "IdentificationSchemeAgencyIdentifier": "ZZZ"
+          }]
+        }],
+        "Contact": [{
+          "Telephone": [{"TextContent": "+1-555-987-6543"}],
+          "ElectronicMail": [{"TextContent": "purchasing@abcmanufacturing.com"}]
+        }]
+      }]
+    }],
+    "PaymentMeans": [{
+      "PaymentMeansCode": [{
+        "CodeContent": "31",
+        "CodeListIdentifier": "UN/ECE 4461"
+      }],
+      "PaymentID": [{"IdentifierContent": "INV-2024-001"}],
+      "PayeeFinancialAccount": [{
+        "ID": [{"IdentifierContent": "US1234567890123456"}],
+        "FinancialInstitutionBranch": [{
+          "FinancialInstitution": [{
+            "ID": [{"IdentifierContent": "BANKUS33"}]
+          }]
+        }]
+      }]
+    }],
+    "TaxTotal": [{
+      "TaxAmount": [{
+        "AmountContent": 150.00,
+        "AmountCurrencyIdentifier": "USD"
+      }],
+      "TaxSubtotal": [{
+        "TaxableAmount": [{
+          "AmountContent": 1500.00,
+          "AmountCurrencyIdentifier": "USD"
+        }],
+        "TaxAmount": [{
+          "AmountContent": 150.00,
+          "AmountCurrencyIdentifier": "USD"
+        }],
+        "TaxCategory": [{
+          "ID": [{
+            "IdentifierContent": "S",
+            "IdentificationSchemeIdentifier": "UN/ECE 5305",
+            "IdentificationSchemeAgencyIdentifier": "6"
+          }],
+          "Percent": [{"NumericContent": 10.00}],
+          "TaxScheme": [{
+            "ID": [{
+              "IdentifierContent": "VAT",
+              "IdentificationSchemeIdentifier": "UN/ECE 5153",
+              "IdentificationSchemeAgencyIdentifier": "6"
+            }]
+          }]
+        }]
+      }]
+    }],
+    "LegalMonetaryTotal": [{
+      "LineExtensionAmount": [{
+        "AmountContent": 1500.00,
+        "AmountCurrencyIdentifier": "USD"
+      }],
+      "TaxExclusiveAmount": [{
+        "AmountContent": 1500.00,
+        "AmountCurrencyIdentifier": "USD"
+      }],
+      "TaxInclusiveAmount": [{
+        "AmountContent": 1650.00,
+        "AmountCurrencyIdentifier": "USD"
+      }],
+      "PayableAmount": [{
+        "AmountContent": 1650.00,
+        "AmountCurrencyIdentifier": "USD"
+      }]
+    }],
+    "InvoiceLine": [{
+      "ID": [{"IdentifierContent": "1"}],
+      "InvoicedQuantity": [{
+        "QuantityContent": 10,
+        "QuantityUnitCode": "C62"
+      }],
+      "LineExtensionAmount": [{
+        "AmountContent": 1000.00,
+        "AmountCurrencyIdentifier": "USD"
+      }],
+      "TaxTotal": [{
+        "TaxAmount": [{
+          "AmountContent": 100.00,
+          "AmountCurrencyIdentifier": "USD"
+        }]
+      }],
+      "Item": [{
+        "Description": [{
+          "TextContent": "High-quality industrial widgets",
+          "LanguageIdentifier": "EN"
+        }],
+        "Name": [{"TextContent": "Industrial Widget Model A"}],
+        "SellersItemIdentification": [{
+          "ID": [{"IdentifierContent": "WIDGET-A-001"}]
+        }],
+        "StandardItemIdentification": [{
+          "ID": [{
+            "IdentifierContent": "1234567890123",
+            "IdentificationSchemeIdentifier": "GTIN",
+            "IdentificationSchemeAgencyIdentifier": "9"
+          }]
+        }],
+        "ClassifiedTaxCategory": [{
+          "ID": [{
+            "IdentifierContent": "S",
+            "IdentificationSchemeIdentifier": "UN/ECE 5305",
+            "IdentificationSchemeAgencyIdentifier": "6"
+          }],
+          "Percent": [{"NumericContent": 10.00}],
+          "TaxScheme": [{
+            "ID": [{
+              "IdentifierContent": "VAT",
+              "IdentificationSchemeIdentifier": "UN/ECE 5153",
+              "IdentificationSchemeAgencyIdentifier": "6"
+            }]
+          }]
+        }]
+      }],
+      "Price": [{
+        "PriceAmount": [{
+          "AmountContent": 100.00,
+          "AmountCurrencyIdentifier": "USD"
+        }],
+        "BaseQuantity": [{
+          "QuantityContent": 1,
+          "QuantityUnitCode": "C62"
+        }]
+      }]
+    }, {
+      "ID": [{"IdentifierContent": "2"}],
+      "InvoicedQuantity": [{
+        "QuantityContent": 5,
+        "QuantityUnitCode": "C62"
+      }],
+      "LineExtensionAmount": [{
+        "AmountContent": 500.00,
+        "AmountCurrencyIdentifier": "USD"
+      }],
+      "TaxTotal": [{
+        "TaxAmount": [{
+          "AmountContent": 50.00,
+          "AmountCurrencyIdentifier": "USD"
+        }]
+      }],
+      "Item": [{
+        "Description": [{
+          "TextContent": "Premium industrial components",
+          "LanguageIdentifier": "EN"
+        }],
+        "Name": [{"TextContent": "Industrial Component Model B"}],
+        "SellersItemIdentification": [{
+          "ID": [{"IdentifierContent": "COMP-B-002"}]
+        }],
+        "StandardItemIdentification": [{
+          "ID": [{
+            "IdentifierContent": "9876543210987",
+            "IdentificationSchemeIdentifier": "GTIN",
+            "IdentificationSchemeAgencyIdentifier": "9"
+          }]
+        }],
+        "ClassifiedTaxCategory": [{
+          "ID": [{
+            "IdentifierContent": "S",
+            "IdentificationSchemeIdentifier": "UN/ECE 5305",
+            "IdentificationSchemeAgencyIdentifier": "6"
+          }],
+          "Percent": [{"NumericContent": 10.00}],
+          "TaxScheme": [{
+            "ID": [{
+              "IdentifierContent": "VAT",
+              "IdentificationSchemeIdentifier": "UN/ECE 5153",
+              "IdentificationSchemeAgencyIdentifier": "6"
+            }]
+          }]
+        }]
+      }],
+      "Price": [{
+        "PriceAmount": [{
+          "AmountContent": 100.00,
+          "AmountCurrencyIdentifier": "USD"
+        }],
+        "BaseQuantity": [{
+          "QuantityContent": 1,
+          "QuantityUnitCode": "C62"
+        }]
+      }]
+    }]
+  }]
+}
