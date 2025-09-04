@@ -13,7 +13,7 @@ In Body select Raw JSON and put in this schema for input:
   
   "outputFormat": "UBL XML",
   
-  "invoiceData": {
+  "invoiceData": 
   
   ... pasted invoice json...
   
