@@ -2,7 +2,7 @@
 
 Deployment link: https://invoice-conversion-api.onrender.com/api/convert
 
-This is deployed on Render, so it has a cold start of around 1 minute. If you the API link and don't see "Cannot GET /api/convert" then just wait for a little.
+This is deployed on Render, so it has a cold start of around 1 minute. If you click the API link and don't see "Cannot GET /api/convert" then just wait for a little.
 
 Go to Postman to test API.
 POST https://invoice-conversion-api.onrender.com/api/convert
