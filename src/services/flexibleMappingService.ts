@@ -1,7 +1,5 @@
-// Flexible mapping service for converting various JSON structures to UBL XML
 import { Builder } from 'xml2js';
 
-// Define common field names that might appear in different JSON structures
 interface FieldMapping {
   xmlElement: string;
   xmlNamespace: 'cbc' | 'cac' | 'ubl';
@@ -10,9 +8,8 @@ interface FieldMapping {
   attributes?: string[];
 }
 
-// Comprehensive field mappings for invoice data
+// mapping for invoice data
 const INVOICE_FIELD_MAPPINGS: FieldMapping[] = [
-  // Basic Invoice Information
   {
     xmlElement: 'UBLVersionID',
     xmlNamespace: 'cbc',
@@ -979,7 +976,6 @@ const buildInvoicePeriod = (periodData: any): any[] => {
   return [period];
 };
 
-// Build document reference structure
 const buildDocumentReference = (docData: any): any[] => {
   const docRef: Record<string, any> = {};
   
@@ -992,7 +988,6 @@ const buildDocumentReference = (docData: any): any[] => {
   return [docRef];
 };
 
-// Build document references structure
 const buildDocumentReferences = (docsData: any): any[] => {
   if (!Array.isArray(docsData)) {
     docsData = [docsData];
@@ -1020,7 +1015,6 @@ const buildDocumentReferences = (docsData: any): any[] => {
   });
 };
 
-// Build delivery structure
 const buildDeliveryStructure = (deliveryData: any): any[] => {
   const delivery: Record<string, any> = {};
   
@@ -1054,7 +1048,6 @@ const buildDeliveryStructure = (deliveryData: any): any[] => {
   return [delivery];
 };
 
-// Build payment means structure
 const buildPaymentMeansStructure = (paymentData: any): any[] => {
   const payment: Record<string, any> = {};
   
@@ -1094,7 +1087,6 @@ const buildPaymentMeansStructure = (paymentData: any): any[] => {
   return [payment];
 };
 
-// Build payment terms structure
 const buildPaymentTermsStructure = (termsData: any): any[] => {
   const terms: Record<string, any> = {};
   
@@ -1104,7 +1096,6 @@ const buildPaymentTermsStructure = (termsData: any): any[] => {
   return [terms];
 };
 
-// Build allowance charge structure
 const buildAllowanceChargeStructure = (chargeData: any): any[] => {
   if (!Array.isArray(chargeData)) {
     chargeData = [chargeData];
@@ -1132,7 +1123,6 @@ const buildAllowanceChargeStructure = (chargeData: any): any[] => {
   });
 };
 
-// Build tax total structure
 const buildTaxTotalStructure = (taxData: any): any[] => {
   const taxTotal: Record<string, any> = {};
   
@@ -1184,7 +1174,6 @@ const buildTaxTotalStructure = (taxData: any): any[] => {
       return taxSubtotal;
     });
   } else if (taxAmount) {
-    // Create a basic tax subtotal if we have tax amount but no subtotal details
     taxTotal['cac:TaxSubtotal'] = [{
       'cbc:TaxAmount': [taxAmount],
       'cac:TaxCategory': [{
@@ -1197,17 +1186,16 @@ const buildTaxTotalStructure = (taxData: any): any[] => {
   return [taxTotal];
 };
 
-// Main conversion function
+// main conversion function
 export const convertFlexibleJsonToUblXml = async (invoiceData: any): Promise<string> => {
   try {
     if (!invoiceData) {
       throw new Error('No invoice data provided');
     }
     
-    // Build XML structure from flexible JSON
+    // Build XML structure from JSON
     const processedData = buildXmlStructure(invoiceData);
     
-    // Set default values for required fields if not found
     if (!processedData['cbc:ID']) {
       processedData['cbc:ID'] = ['UNKNOWN'];
     }
@@ -1242,7 +1230,7 @@ export const convertFlexibleJsonToUblXml = async (invoiceData: any): Promise<str
     
     let xml = builder.buildObject(ublObj);
     
-    // Clean up empty elements
+    //clean up empty elements
     xml = xml
       .replace(/<([^/>]+)><\/\1>/g, '<$1/>')
       .replace(/<([^>]+)><\/\1>/g, '')

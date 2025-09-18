@@ -1,12 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
 import { ApiError } from './errorHandler';
 
-// Helper function to check if a value is an object (and not null/array)
 const isObject = (value: any): boolean => {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
 };
 
-// Flexible validation that accepts any reasonable JSON structure
 export const validateConvertRequest = (
   req: Request,
   res: Response,
@@ -15,7 +13,6 @@ export const validateConvertRequest = (
   try {
     const { invoiceType, outputFormat, invoiceData } = req.body;
 
-    // Check for basic required parameters
     if (!invoiceType || !outputFormat || !invoiceData) {
       throw ApiError.badRequest('Missing required fields: invoiceType, outputFormat, and invoiceData are required');
     }
@@ -33,10 +30,8 @@ export const validateConvertRequest = (
       throw ApiError.badRequest('invoiceData must be a valid JSON object');
     }
 
-    // Accept any JSON structure - no strict requirements
     let invoice = invoiceData;
     
-    // If there's an Invoice property, use it, otherwise use the whole object
     if (invoiceData.Invoice) {
       if (Array.isArray(invoiceData.Invoice)) {
         invoice = invoiceData.Invoice[0] || invoiceData;
@@ -44,9 +39,7 @@ export const validateConvertRequest = (
         invoice = invoiceData.Invoice;
       }
     }
-
-    // No strict field validation - the flexible mapping service will handle extraction
-    // Just log what we received for debugging
+    // I will use this part for debugging and for future logging to tell users what is missing
     console.log('Received invoice data structure:', Object.keys(invoice).join(', '));
 
     req.body.processedInvoice = invoice;
