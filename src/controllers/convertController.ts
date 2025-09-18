@@ -1,17 +1,27 @@
 import { Request, Response, NextFunction } from 'express';
 import { convertJsonToUblXml } from '../services/conversionService';
+import { convertFlexibleJsonToUblXml } from '../services/flexibleMappingService';
 import { ApiError } from '../middleware/errorHandler';
 
 export const convertController = {
   convert: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { processedInvoice } = req.body;
+      const { processedInvoice, useFlexibleMapping } = req.body;
       
       if (!processedInvoice) {
         throw new Error('No processed invoice data found');
       }
       
-      const ublXml = await convertJsonToUblXml(processedInvoice);
+      let ublXml: string;
+      
+      // Use flexible mapping by default, fall back to strict mapping if specified
+      if (useFlexibleMapping === false) {
+        console.log('Using strict mapping (legacy mode)');
+        ublXml = await convertJsonToUblXml(processedInvoice);
+      } else {
+        console.log('Using flexible mapping');
+        ublXml = await convertFlexibleJsonToUblXml(processedInvoice);
+      }
       
       res.set('Content-Type', 'application/xml');
       
