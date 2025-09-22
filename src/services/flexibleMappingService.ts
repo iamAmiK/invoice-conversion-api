@@ -1375,19 +1375,23 @@ const buildTaxTotalStructure = (taxData: any): any[] => {
     });
   } else if (taxAmountValue) {
     // Create default tax subtotal
-    const cleanTaxAmount = typeof taxAmountValue === 'string' ? 
-      (taxAmountValue.match(/^([\d.]+)/) ? taxAmountValue.match(/^([\d.]+)/)[1] : taxAmountValue) : 
-      taxAmountValue;
-    
+    let cleanTaxAmount = taxAmountValue;
+    if (typeof taxAmountValue === 'string') {
+        const match = taxAmountValue.match(/^([\d.]+)/);
+        if (match) {
+            cleanTaxAmount = match[1];
+        }
+    }
+
     taxTotal['cac:TaxSubtotal'] = [{
-      'cbc:TaxAmount': [cleanTaxAmount],
-      'cac:TaxCategory': [{
-        'cbc:ID': ['S'],
-        'cbc:Percent': ['10.00'], // Default to 10% based on your data
-        'cac:TaxScheme': [{'cbc:ID': ['VAT']}]
-      }]
+        'cbc:TaxAmount': [cleanTaxAmount],
+        'cac:TaxCategory': [{
+            'cbc:ID': ['S'],
+            'cbc:Percent': ['10.00'], // Default to 10% based on your data
+            'cac:TaxScheme': [{'cbc:ID': ['VAT']}]
+        }]
     }];
-  }
+}
   
   return [taxTotal];
 };
