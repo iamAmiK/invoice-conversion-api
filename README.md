@@ -9,5 +9,3 @@ Task 2: Add error response telling user what fields are missing but should be no
 Task 3: Make route for /Fix (adjustments for missing fields)
 
 Later: Scope for different invoice procurements from PDF to JSON
-
-Note: one dependency is outdated
