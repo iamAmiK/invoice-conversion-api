@@ -10,5 +10,6 @@ Task 3: Make route for /Fix (adjustments for missing fields) #Done
   - /api/fix/analyse - analyse invoice and return missing fields
   - /api/fix/apply - apply fixes to invoice and return updated JSON + XML
   - See .md file for testing
+Note: I'm not using any storage in temp/cache (bcz of security issues) nor any services (cost issues)
 
 Later: Scope for different invoice procurements from PDF to JSON
