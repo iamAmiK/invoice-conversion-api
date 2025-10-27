@@ -14,7 +14,6 @@ const processUblJson = (data) => {
         for (let [key, value] of Object.entries(data)) {
             if (value === null || value === '')
                 continue;
-            // Handle attributes (keys starting with _)
             if (key.startsWith('_')) {
                 const attrName = key.substring(1);
                 attributes[attrName] = value;

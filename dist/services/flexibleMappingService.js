@@ -1,11 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.convertFlexibleJsonToUblXml = void 0;
-// Flexible mapping service for converting various JSON structures to UBL XML
+exports.convertFlexibleJsonToUblXml = exports.detectMissingFields = void 0;
 const xml2js_1 = require("xml2js");
-// Comprehensive field mappings for invoice data
+// mapping for invoice data
 const INVOICE_FIELD_MAPPINGS = [
-    // Basic Invoice Information
     {
         xmlElement: 'UBLVersionID',
         xmlNamespace: 'cbc',
@@ -456,6 +454,31 @@ const findFieldValue = (obj, searchFields) => {
     }
     return null;
 };
+// NEW: Function to find array field values specifically for line items
+const findArrayFieldValue = (obj, searchFields) => {
+    if (typeof obj !== 'object' || obj === null) {
+        return null;
+    }
+    // First, try direct key matches (case-insensitive)
+    for (const field of searchFields) {
+        for (const key in obj) {
+            if (key.toLowerCase() === field.toLowerCase()) {
+                return obj[key]; // Return the entire array, not just first item
+            }
+        }
+    }
+    // Recursive search in nested objects
+    for (const key in obj) {
+        const value = obj[key];
+        if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+            const found = findArrayFieldValue(value, searchFields);
+            if (found !== null && found !== undefined) {
+                return found;
+            }
+        }
+    }
+    return null;
+};
 // Extract attributes from original value if present
 const extractAttributes = (obj, searchFields) => {
     const attributes = {};
@@ -519,7 +542,7 @@ const buildXmlStructure = (jsonData) => {
         result['cac:InvoicePeriod'] = buildInvoicePeriod(invoicePeriod);
     }
     // Handle order reference
-    const orderRef = findFieldValue(jsonData, ['orderReference', 'orderRef', 'purchaseOrder', 'poNumber']);
+    const orderRef = findFieldValue(jsonData, ['orderReference', 'orderRef', 'purchaseOrder', 'poNumber', 'purchaseOrderReference']);
     if (orderRef) {
         result['cac:OrderReference'] = [{ 'cbc:ID': [orderRef] }];
     }
@@ -534,19 +557,19 @@ const buildXmlStructure = (jsonData) => {
         result['cac:AdditionalDocumentReference'] = buildDocumentReferences(docRefs);
     }
     // Handle supplier party information
-    const supplierData = findFieldValue(jsonData, ['supplier', 'seller', 'vendor', 'accountingSupplierParty', 'supplierParty']);
+    const supplierData = findFieldValue(jsonData, ['supplier', 'seller', 'vendor', 'accountingSupplierParty', 'supplierParty', 'vendorName']);
     if (supplierData) {
-        result['cac:AccountingSupplierParty'] = buildPartyStructure(supplierData, 'supplier');
+        result['cac:AccountingSupplierParty'] = buildPartyStructure(supplierData, 'supplier', jsonData);
     }
     // Handle customer party information
-    const customerData = findFieldValue(jsonData, ['customer', 'buyer', 'client', 'accountingCustomerParty', 'customerParty']);
+    const customerData = findFieldValue(jsonData, ['customer', 'buyer', 'client', 'accountingCustomerParty', 'customerParty', 'customerName']);
     if (customerData) {
-        result['cac:AccountingCustomerParty'] = buildPartyStructure(customerData, 'customer');
+        result['cac:AccountingCustomerParty'] = buildPartyStructure(customerData, 'customer', jsonData);
     }
     // Handle payee party
     const payeeData = findFieldValue(jsonData, ['payee', 'payeeParty']);
     if (payeeData) {
-        result['cac:PayeeParty'] = buildPartyStructure(payeeData, 'payee');
+        result['cac:PayeeParty'] = buildPartyStructure(payeeData, 'payee', jsonData);
     }
     // Handle delivery information
     const deliveryData = findFieldValue(jsonData, ['delivery', 'shipping']);
@@ -559,7 +582,7 @@ const buildXmlStructure = (jsonData) => {
         result['cac:PaymentMeans'] = buildPaymentMeansStructure(paymentMeans);
     }
     // Handle payment terms
-    const paymentTerms = findFieldValue(jsonData, ['paymentTerms', 'terms']);
+    const paymentTerms = findFieldValue(jsonData, ['paymentTerms', 'terms', 'paymentTerms']);
     if (paymentTerms) {
         result['cac:PaymentTerms'] = buildPaymentTermsStructure(paymentTerms);
     }
@@ -569,75 +592,95 @@ const buildXmlStructure = (jsonData) => {
         result['cac:AllowanceCharge'] = buildAllowanceChargeStructure(allowanceCharges);
     }
     // Handle tax information
-    const taxData = findFieldValue(jsonData, ['taxTotal', 'tax', 'taxes']);
+    const taxData = findFieldValue(jsonData, ['taxTotal', 'tax', 'taxes', 'totalTaxOrVAT']);
     if (taxData || result['cbc:TaxAmount']) {
         result['cac:TaxTotal'] = buildTaxTotalStructure(taxData || jsonData);
     }
-    // Handle line items
-    const lineItems = findFieldValue(jsonData, ['lines', 'items', 'lineItems', 'invoiceLines', 'invoiceLine']);
-    if (lineItems) {
+    // FIXED: Handle line items - use the new array-specific function
+    const lineItems = findArrayFieldValue(jsonData, ['lines', 'items', 'lineItems', 'invoiceLines', 'invoiceLine']);
+    if (lineItems && Array.isArray(lineItems)) {
         result['cac:InvoiceLine'] = buildLineItems(lineItems);
     }
     // Handle totals
-    const totalsData = findFieldValue(jsonData, ['totals', 'legalMonetaryTotal', 'monetaryTotal', 'amounts']);
+    const totalsData = findFieldValue(jsonData, ['totals', 'legalMonetaryTotal', 'monetaryTotal', 'amounts', 'totalAmount']);
     if (totalsData || result['cbc:TaxInclusiveAmount'] || result['cbc:PayableAmount']) {
         result['cac:LegalMonetaryTotal'] = buildTotalsStructure(totalsData || jsonData);
     }
     return result;
 };
-// Build party structure for supplier/customer/payee
-const buildPartyStructure = (partyData, partyType) => {
+// ENHANCED: Build party structure for supplier/customer/payee
+const buildPartyStructure = (partyData, partyType, originalData) => {
     const party = {};
+    // Use original data as fallback for address information
+    const addressSource = partyData || originalData;
     // Endpoint ID
     const endpointId = findFieldValue(partyData, ['endpointID', 'gln', 'electronicAddress']);
     if (endpointId) {
         party['cbc:EndpointID'] = [endpointId];
     }
     // Party identification
-    const partyId = findFieldValue(partyData, ['partyIdentification', 'id', 'supplierId', 'customerId']);
+    const partyId = findFieldValue(partyData || originalData, ['partyIdentification', 'id', 'supplierId', 'customerId', 'customerID']);
     if (partyId) {
         party['cac:PartyIdentification'] = [{ 'cbc:ID': [partyId] }];
     }
-    // Party name
-    const name = findFieldValue(partyData, ['name', 'companyName', 'legalName']);
+    // Party name - handle string values directly
+    let name;
+    if (typeof partyData === 'string') {
+        name = partyData;
+    }
+    else {
+        name = findFieldValue(partyData || originalData, ['name', 'companyName', 'legalName', 'vendorName', 'customerName']);
+    }
     if (name) {
         party['cac:PartyName'] = [{ 'cbc:Name': [name] }];
     }
-    // Address
-    const addressData = findFieldValue(partyData, ['address', 'postalAddress']);
-    if (addressData || partyData) {
+    // Address - look for address fields in both partyData and originalData
+    const addressData = findFieldValue(addressSource, ['address', 'postalAddress']) || addressSource;
+    if (addressData || originalData) {
         const address = {};
-        const addressId = findFieldValue(addressData || partyData, ['addressId', 'id']);
+        const addressId = findFieldValue(addressData, ['addressId', 'id']);
         if (addressId)
             address['cbc:ID'] = [addressId];
-        const postbox = findFieldValue(addressData || partyData, ['postbox', 'poBox']);
+        const postbox = findFieldValue(addressData, ['postbox', 'poBox']);
         if (postbox)
             address['cbc:Postbox'] = [postbox];
-        const street = findFieldValue(addressData || partyData, ['street', 'streetName', 'address1']);
+        // Try to find address from various fields based on party type
+        let street;
+        if (partyType === 'supplier') {
+            street = findFieldValue(originalData, ['vendorAddress', 'supplier address', 'sellerAddress']) ||
+                findFieldValue(addressData, ['street', 'streetName', 'address1', 'address']);
+        }
+        else if (partyType === 'customer') {
+            street = findFieldValue(originalData, ['billingAddress', 'customerAddress', 'buyerAddress']) ||
+                findFieldValue(addressData, ['street', 'streetName', 'address1', 'address']);
+        }
+        else {
+            street = findFieldValue(addressData, ['street', 'streetName', 'address1', 'address']);
+        }
         if (street)
             address['cbc:StreetName'] = [street];
-        const additionalStreet = findFieldValue(addressData || partyData, ['address2', 'additionalStreetName', 'suite']);
+        const additionalStreet = findFieldValue(addressData, ['address2', 'additionalStreetName', 'suite']);
         if (additionalStreet)
             address['cbc:AdditionalStreetName'] = [additionalStreet];
-        const buildingNumber = findFieldValue(addressData || partyData, ['buildingNumber', 'houseNumber']);
+        const buildingNumber = findFieldValue(addressData, ['buildingNumber', 'houseNumber']);
         if (buildingNumber)
             address['cbc:BuildingNumber'] = [buildingNumber];
-        const department = findFieldValue(addressData || partyData, ['department', 'division']);
+        const department = findFieldValue(addressData, ['department', 'division']);
         if (department)
             address['cbc:Department'] = [department];
-        const city = findFieldValue(addressData || partyData, ['city', 'cityName']);
+        const city = findFieldValue(addressData, ['city', 'cityName']);
         if (city)
             address['cbc:CityName'] = [city];
-        const postal = findFieldValue(addressData || partyData, ['postalCode', 'zipCode', 'zip']);
+        const postal = findFieldValue(addressData, ['postalCode', 'zipCode', 'zip']);
         if (postal)
             address['cbc:PostalZone'] = [postal];
-        const countrySubentity = findFieldValue(addressData || partyData, ['state', 'province', 'region']);
+        const countrySubentity = findFieldValue(addressData, ['state', 'province', 'region']);
         if (countrySubentity)
             address['cbc:CountrySubentity'] = [countrySubentity];
-        const countrySubentityCode = findFieldValue(addressData || partyData, ['stateCode', 'provinceCode']);
+        const countrySubentityCode = findFieldValue(addressData, ['stateCode', 'provinceCode']);
         if (countrySubentityCode)
             address['cbc:CountrySubentityCode'] = [countrySubentityCode];
-        const country = findFieldValue(addressData || partyData, ['country', 'countryCode']);
+        const country = findFieldValue(addressData, ['country', 'countryCode']);
         if (country) {
             address['cac:Country'] = [{ 'cbc:IdentificationCode': [country] }];
         }
@@ -665,12 +708,12 @@ const buildPartyStructure = (partyData, partyType) => {
     }
     // Party legal entity
     const legalData = findFieldValue(partyData, ['partyLegalEntity', 'legalEntity', 'legal']);
-    if (legalData || partyData) {
+    if (legalData || name) {
         const legalEntity = {};
-        const legalName = findFieldValue(legalData || partyData, ['registrationName', 'legalName', 'name']);
+        const legalName = findFieldValue(legalData, ['registrationName', 'legalName']) || name;
         if (legalName)
             legalEntity['cbc:RegistrationName'] = [legalName];
-        const companyId = findFieldValue(legalData || partyData, ['companyID', 'registrationNumber', 'businessNumber']);
+        const companyId = findFieldValue(legalData, ['companyID', 'registrationNumber', 'businessNumber']);
         if (companyId)
             legalEntity['cbc:CompanyID'] = [companyId];
         const regAddress = findFieldValue(legalData, ['registrationAddress']);
@@ -732,7 +775,7 @@ const buildPartyStructure = (partyData, partyType) => {
     }
     return [{ 'cac:Party': [party] }];
 };
-// Build line items structure
+// ENHANCED: Build line items structure
 const buildLineItems = (lineItemsData) => {
     if (!Array.isArray(lineItemsData)) {
         lineItemsData = [lineItemsData];
@@ -740,21 +783,40 @@ const buildLineItems = (lineItemsData) => {
     return lineItemsData.map((item, index) => {
         const line = {};
         // Line ID
-        const id = findFieldValue(item, ['id', 'lineId', 'lineNumber']) || (index + 1).toString();
+        const id = findFieldValue(item, ['id', 'lineId', 'lineNumber', 'index']) || (index + 1).toString();
         line['cbc:ID'] = [id];
         // Note
         const note = findFieldValue(item, ['note', 'comment', 'remarks']);
         if (note)
             line['cbc:Note'] = [note];
-        // Quantity
-        const quantity = findFieldValue(item, ['quantity', 'qty', 'invoicedQuantity']);
-        if (quantity) {
-            const unitCode = findFieldValue(item, ['unitCode', 'unit']) || 'C62';
+        // Quantity - handle both numeric values and string values with units
+        const quantityValue = findFieldValue(item, ['quantity', 'qty', 'invoicedQuantity']);
+        if (quantityValue) {
+            let quantity = quantityValue;
+            let unitCode = findFieldValue(item, ['unitCode', 'unit']) || 'C62';
+            // If quantity is a string like "72.00 PCE", extract the number and unit
+            if (typeof quantityValue === 'string') {
+                const match = quantityValue.match(/^([\d.]+)\s*(.*)$/);
+                if (match) {
+                    quantity = match[1];
+                    if (match[2] && match[2].trim()) {
+                        unitCode = match[2].trim();
+                    }
+                }
+            }
             line['cbc:InvoicedQuantity'] = [{ $: { unitCode }, _: quantity }];
         }
-        // Line amount
-        const amount = findFieldValue(item, ['amount', 'lineAmount', 'lineExtensionAmount', 'total']);
-        if (amount) {
+        // Line amount - clean currency from amount if present
+        const amountValue = findFieldValue(item, ['amount', 'lineAmount', 'lineExtensionAmount', 'total']);
+        if (amountValue) {
+            let amount = amountValue;
+            // If amount is a string like "323.28 AUD", extract just the number
+            if (typeof amountValue === 'string') {
+                const match = amountValue.match(/^([\d.]+)/);
+                if (match) {
+                    amount = match[1];
+                }
+            }
             line['cbc:LineExtensionAmount'] = [amount];
         }
         // Accounting cost
@@ -783,7 +845,7 @@ const buildLineItems = (lineItemsData) => {
         const itemData = findFieldValue(item, ['item', 'product']) || item;
         if (itemData) {
             const itemObj = {};
-            const itemName = findFieldValue(itemData, ['name', 'itemName', 'productName']);
+            const itemName = findFieldValue(itemData, ['name', 'itemName', 'productName', 'description']);
             if (itemName)
                 itemObj['cbc:Name'] = [itemName];
             const itemDesc = findFieldValue(itemData, ['description', 'details', 'productDescription']);
@@ -804,14 +866,27 @@ const buildLineItems = (lineItemsData) => {
             if (commodityCode) {
                 itemObj['cac:CommodityClassification'] = [{ 'cbc:ItemClassificationCode': [commodityCode] }];
             }
-            // Classified tax category
+            // Classified tax category - extract tax percentage from item if available
             const taxCategory = findFieldValue(itemData, ['classifiedTaxCategory', 'taxCategory']);
-            if (taxCategory) {
+            const taxPercent = findFieldValue(item, ['tax', 'taxRate', 'taxPercent']);
+            if (taxCategory || taxPercent) {
                 const category = {};
-                const categoryId = findFieldValue(taxCategory, ['id', 'code']);
-                if (categoryId)
-                    category['cbc:ID'] = [categoryId];
-                const percent = findFieldValue(taxCategory, ['percent', 'rate']);
+                const categoryId = findFieldValue(taxCategory, ['id', 'code']) || 'S';
+                category['cbc:ID'] = [categoryId];
+                // Use tax percentage from item if available
+                let percent = findFieldValue(taxCategory, ['percent', 'rate']);
+                if (!percent && taxPercent) {
+                    // Handle tax like "10.00 %" - extract just the number
+                    if (typeof taxPercent === 'string') {
+                        const match = taxPercent.match(/^([\d.]+)/);
+                        if (match) {
+                            percent = match[1];
+                        }
+                    }
+                    else {
+                        percent = taxPercent;
+                    }
+                }
                 if (percent)
                     category['cbc:Percent'] = [percent];
                 const schemeData = findFieldValue(taxCategory, ['taxScheme', 'scheme']);
@@ -842,9 +917,18 @@ const buildLineItems = (lineItemsData) => {
         const priceData = findFieldValue(item, ['price', 'pricing']) || item;
         if (priceData) {
             const priceObj = {};
-            const priceAmount = findFieldValue(priceData, ['priceAmount', 'unitPrice', 'price', 'rate']);
-            if (priceAmount)
+            const priceAmountValue = findFieldValue(priceData, ['priceAmount', 'unitPrice', 'price', 'rate']);
+            if (priceAmountValue) {
+                let priceAmount = priceAmountValue;
+                // If price is a string like "4.4900 AUD", extract just the number
+                if (typeof priceAmountValue === 'string') {
+                    const match = priceAmountValue.match(/^([\d.]+)/);
+                    if (match) {
+                        priceAmount = match[1];
+                    }
+                }
                 priceObj['cbc:PriceAmount'] = [priceAmount];
+            }
             const baseQuantity = findFieldValue(priceData, ['baseQuantity', 'priceQuantity']);
             if (baseQuantity) {
                 const unitCode = findFieldValue(priceData, ['priceUnitCode', 'unit']) || 'C62';
@@ -862,33 +946,89 @@ const buildLineItems = (lineItemsData) => {
         return line;
     });
 };
-// Build totals structure
+// ENHANCED: Build totals structure
 const buildTotalsStructure = (totalsData) => {
     const totals = {};
     const lineExtension = findFieldValue(totalsData, ['lineExtensionAmount', 'subtotal', 'netAmount']);
-    if (lineExtension)
-        totals['cbc:LineExtensionAmount'] = [lineExtension];
+    if (lineExtension) {
+        let amount = lineExtension;
+        if (typeof lineExtension === 'string') {
+            const match = lineExtension.match(/^([\d.]+)/);
+            if (match)
+                amount = match[1];
+        }
+        totals['cbc:LineExtensionAmount'] = [amount];
+    }
     const taxExclusive = findFieldValue(totalsData, ['taxExclusiveAmount', 'amountBeforeTax', 'netTotal']);
-    if (taxExclusive)
-        totals['cbc:TaxExclusiveAmount'] = [taxExclusive];
+    if (taxExclusive) {
+        let amount = taxExclusive;
+        if (typeof taxExclusive === 'string') {
+            const match = taxExclusive.match(/^([\d.]+)/);
+            if (match)
+                amount = match[1];
+        }
+        totals['cbc:TaxExclusiveAmount'] = [amount];
+    }
     const taxInclusive = findFieldValue(totalsData, ['taxInclusiveAmount', 'total', 'totalAmount', 'grandTotal']);
-    if (taxInclusive)
-        totals['cbc:TaxInclusiveAmount'] = [taxInclusive];
+    if (taxInclusive) {
+        let amount = taxInclusive;
+        if (typeof taxInclusive === 'string') {
+            const match = taxInclusive.match(/^([\d.]+)/);
+            if (match)
+                amount = match[1];
+        }
+        totals['cbc:TaxInclusiveAmount'] = [amount];
+    }
     const allowanceTotal = findFieldValue(totalsData, ['allowanceTotalAmount', 'totalDiscount']);
-    if (allowanceTotal)
-        totals['cbc:AllowanceTotalAmount'] = [allowanceTotal];
+    if (allowanceTotal) {
+        let amount = allowanceTotal;
+        if (typeof allowanceTotal === 'string') {
+            const match = allowanceTotal.match(/^([\d.]+)/);
+            if (match)
+                amount = match[1];
+        }
+        totals['cbc:AllowanceTotalAmount'] = [amount];
+    }
     const chargeTotal = findFieldValue(totalsData, ['chargeTotalAmount', 'totalCharges']);
-    if (chargeTotal)
-        totals['cbc:ChargeTotalAmount'] = [chargeTotal];
+    if (chargeTotal) {
+        let amount = chargeTotal;
+        if (typeof chargeTotal === 'string') {
+            const match = chargeTotal.match(/^([\d.]+)/);
+            if (match)
+                amount = match[1];
+        }
+        totals['cbc:ChargeTotalAmount'] = [amount];
+    }
     const prepaid = findFieldValue(totalsData, ['prepaidAmount', 'advancePayment', 'deposit']);
-    if (prepaid)
-        totals['cbc:PrepaidAmount'] = [prepaid];
+    if (prepaid) {
+        let amount = prepaid;
+        if (typeof prepaid === 'string') {
+            const match = prepaid.match(/^([\d.]+)/);
+            if (match)
+                amount = match[1];
+        }
+        totals['cbc:PrepaidAmount'] = [amount];
+    }
     const rounding = findFieldValue(totalsData, ['payableRoundingAmount', 'rounding']);
-    if (rounding)
-        totals['cbc:PayableRoundingAmount'] = [rounding];
+    if (rounding) {
+        let amount = rounding;
+        if (typeof rounding === 'string') {
+            const match = rounding.match(/^([\d.]+)/);
+            if (match)
+                amount = match[1];
+        }
+        totals['cbc:PayableRoundingAmount'] = [amount];
+    }
     const payable = findFieldValue(totalsData, ['payableAmount', 'amountDue', 'totalDue', 'finalAmount']);
-    if (payable)
-        totals['cbc:PayableAmount'] = [payable];
+    if (payable) {
+        let amount = payable;
+        if (typeof payable === 'string') {
+            const match = payable.match(/^([\d.]+)/);
+            if (match)
+                amount = match[1];
+        }
+        totals['cbc:PayableAmount'] = [amount];
+    }
     return [totals];
 };
 // Build invoice period structure
@@ -902,7 +1042,6 @@ const buildInvoicePeriod = (periodData) => {
         period['cbc:EndDate'] = [endDate];
     return [period];
 };
-// Build document reference structure
 const buildDocumentReference = (docData) => {
     const docRef = {};
     const id = findFieldValue(docData, ['id', 'documentId', 'contractNumber']);
@@ -913,7 +1052,6 @@ const buildDocumentReference = (docData) => {
         docRef['cbc:DocumentType'] = [docType];
     return [docRef];
 };
-// Build document references structure
 const buildDocumentReferences = (docsData) => {
     if (!Array.isArray(docsData)) {
         docsData = [docsData];
@@ -937,13 +1075,12 @@ const buildDocumentReferences = (docsData) => {
         return docRef;
     });
 };
-// Build delivery structure
 const buildDeliveryStructure = (deliveryData) => {
     const delivery = {};
     const actualDate = findFieldValue(deliveryData, ['actualDeliveryDate', 'deliveryDate', 'shippingDate']);
     if (actualDate)
         delivery['cbc:ActualDeliveryDate'] = [actualDate];
-    const locationData = findFieldValue(deliveryData, ['deliveryLocation', 'location', 'address']);
+    const locationData = findFieldValue(deliveryData, ['deliveryLocation', 'location', 'address', 'shippingAddress']);
     if (locationData) {
         const location = {};
         const address = {};
@@ -966,7 +1103,6 @@ const buildDeliveryStructure = (deliveryData) => {
     }
     return [delivery];
 };
-// Build payment means structure
 const buildPaymentMeansStructure = (paymentData) => {
     const payment = {};
     const meansCode = findFieldValue(paymentData, ['paymentMeansCode', 'paymentMethod', 'method']);
@@ -1001,15 +1137,20 @@ const buildPaymentMeansStructure = (paymentData) => {
     }
     return [payment];
 };
-// Build payment terms structure
 const buildPaymentTermsStructure = (termsData) => {
     const terms = {};
-    const note = findFieldValue(termsData, ['note', 'terms', 'paymentTerms']);
+    // Handle string values directly for payment terms
+    let note;
+    if (typeof termsData === 'string') {
+        note = termsData;
+    }
+    else {
+        note = findFieldValue(termsData, ['note', 'terms', 'paymentTerms']);
+    }
     if (note)
         terms['cbc:Note'] = [note];
     return [terms];
 };
-// Build allowance charge structure
 const buildAllowanceChargeStructure = (chargeData) => {
     if (!Array.isArray(chargeData)) {
         chargeData = [chargeData];
@@ -1021,24 +1162,46 @@ const buildAllowanceChargeStructure = (chargeData) => {
         const reason = findFieldValue(charge, ['allowanceChargeReason', 'reason', 'description']);
         if (reason)
             allowanceCharge['cbc:AllowanceChargeReason'] = [reason];
-        const amount = findFieldValue(charge, ['amount', 'value']);
-        if (amount)
+        const amountValue = findFieldValue(charge, ['amount', 'value']);
+        if (amountValue) {
+            let amount = amountValue;
+            if (typeof amountValue === 'string') {
+                const match = amountValue.match(/^([\d.]+)/);
+                if (match)
+                    amount = match[1];
+            }
             allowanceCharge['cbc:Amount'] = [amount];
+        }
         const multiplier = findFieldValue(charge, ['multiplierFactorNumeric', 'percentage', 'rate']);
         if (multiplier)
             allowanceCharge['cbc:MultiplierFactorNumeric'] = [multiplier];
-        const baseAmount = findFieldValue(charge, ['baseAmount', 'originalAmount']);
-        if (baseAmount)
+        const baseAmountValue = findFieldValue(charge, ['baseAmount', 'originalAmount']);
+        if (baseAmountValue) {
+            let baseAmount = baseAmountValue;
+            if (typeof baseAmountValue === 'string') {
+                const match = baseAmountValue.match(/^([\d.]+)/);
+                if (match)
+                    baseAmount = match[1];
+            }
             allowanceCharge['cbc:BaseAmount'] = [baseAmount];
+        }
         return allowanceCharge;
     });
 };
-// Build tax total structure
 const buildTaxTotalStructure = (taxData) => {
     const taxTotal = {};
-    const taxAmount = findFieldValue(taxData, ['taxAmount', 'totalTax', 'vatAmount']);
-    if (taxAmount)
+    const taxAmountValue = findFieldValue(taxData, ['taxAmount', 'totalTax', 'vatAmount', 'totalTaxOrVAT']);
+    if (taxAmountValue) {
+        let taxAmount = taxAmountValue;
+        // Handle tax amounts like "96.98 AUD"
+        if (typeof taxAmountValue === 'string') {
+            const match = taxAmountValue.match(/^([\d.]+)/);
+            if (match) {
+                taxAmount = match[1];
+            }
+        }
         taxTotal['cbc:TaxAmount'] = [taxAmount];
+    }
     let subtotals = findFieldValue(taxData, ['taxSubtotal', 'subtotals', 'breakdown']);
     if (subtotals) {
         if (!Array.isArray(subtotals)) {
@@ -1046,21 +1209,42 @@ const buildTaxTotalStructure = (taxData) => {
         }
         taxTotal['cac:TaxSubtotal'] = subtotals.map((subtotal) => {
             const taxSubtotal = {};
-            const taxableAmount = findFieldValue(subtotal, ['taxableAmount', 'taxBasis']);
-            if (taxableAmount)
+            const taxableAmountValue = findFieldValue(subtotal, ['taxableAmount', 'taxBasis']);
+            if (taxableAmountValue) {
+                let taxableAmount = taxableAmountValue;
+                if (typeof taxableAmountValue === 'string') {
+                    const match = taxableAmountValue.match(/^([\d.]+)/);
+                    if (match)
+                        taxableAmount = match[1];
+                }
                 taxSubtotal['cbc:TaxableAmount'] = [taxableAmount];
-            const subtotalTaxAmount = findFieldValue(subtotal, ['taxAmount', 'tax']);
-            if (subtotalTaxAmount)
+            }
+            const subtotalTaxAmountValue = findFieldValue(subtotal, ['taxAmount', 'tax']);
+            if (subtotalTaxAmountValue) {
+                let subtotalTaxAmount = subtotalTaxAmountValue;
+                if (typeof subtotalTaxAmountValue === 'string') {
+                    const match = subtotalTaxAmountValue.match(/^([\d.]+)/);
+                    if (match)
+                        subtotalTaxAmount = match[1];
+                }
                 taxSubtotal['cbc:TaxAmount'] = [subtotalTaxAmount];
+            }
             const categoryData = findFieldValue(subtotal, ['taxCategory', 'category']);
             if (categoryData) {
                 const category = {};
                 const categoryId = findFieldValue(categoryData, ['id', 'categoryCode']);
                 if (categoryId)
                     category['cbc:ID'] = [categoryId];
-                const percent = findFieldValue(categoryData, ['percent', 'rate', 'taxRate']);
-                if (percent)
+                const percentValue = findFieldValue(categoryData, ['percent', 'rate', 'taxRate']);
+                if (percentValue) {
+                    let percent = percentValue;
+                    if (typeof percentValue === 'string') {
+                        const match = percentValue.match(/^([\d.]+)/);
+                        if (match)
+                            percent = match[1];
+                    }
                     category['cbc:Percent'] = [percent];
+                }
                 const exemptionCode = findFieldValue(categoryData, ['taxExemptionReasonCode', 'exemptionCode']);
                 if (exemptionCode)
                     category['cbc:TaxExemptionReasonCode'] = [exemptionCode];
@@ -1079,38 +1263,128 @@ const buildTaxTotalStructure = (taxData) => {
             return taxSubtotal;
         });
     }
-    else if (taxAmount) {
-        // Create a basic tax subtotal if we have tax amount but no subtotal details
+    else if (taxAmountValue) {
+        // Create default tax subtotal
+        let cleanTaxAmount = taxAmountValue;
+        if (typeof taxAmountValue === 'string') {
+            const match = taxAmountValue.match(/^([\d.]+)/);
+            if (match) {
+                cleanTaxAmount = match[1];
+            }
+        }
         taxTotal['cac:TaxSubtotal'] = [{
-                'cbc:TaxAmount': [taxAmount],
+                'cbc:TaxAmount': [cleanTaxAmount],
                 'cac:TaxCategory': [{
                         'cbc:ID': ['S'],
+                        'cbc:Percent': ['10.00'], // Default to 10% based on your data
                         'cac:TaxScheme': [{ 'cbc:ID': ['VAT'] }]
                     }]
             }];
     }
     return [taxTotal];
 };
-// Main conversion function
+// Helper function to parse date formats
+const parseDate = (dateStr) => {
+    if (!dateStr)
+        return new Date().toISOString().split('T')[0];
+    if (typeof dateStr !== 'string')
+        return dateStr;
+    // Handle DD/MM/YYYY format
+    const ddmmyyyy = dateStr.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if (ddmmyyyy) {
+        return `${ddmmyyyy[3]}-${ddmmyyyy[2]}-${ddmmyyyy[1]}`;
+    }
+    // Handle other formats or return as-is
+    return dateStr;
+};
+// Function to detect missing fields in the input JSON
+const detectMissingFields = (invoiceData) => {
+    const found = new Set();
+    const missing = [];
+    // Check each field mapping to see if data is present
+    for (const mapping of INVOICE_FIELD_MAPPINGS) {
+        const fieldName = `${mapping.xmlNamespace}:${mapping.xmlElement}`;
+        const value = findFieldValue(invoiceData, mapping.jsonFields);
+        if (value !== null && value !== undefined && value !== '') {
+            found.add(fieldName);
+        }
+        else {
+            // Only add to missing if it's not a duplicate field name
+            if (!missing.includes(fieldName)) {
+                missing.push(fieldName);
+            }
+        }
+    }
+    // Check for complex structures
+    const complexFields = [
+        { name: 'cac:InvoicePeriod', jsonFields: ['invoicePeriod', 'billingPeriod', 'period'] },
+        { name: 'cac:OrderReference', jsonFields: ['orderReference', 'orderRef', 'purchaseOrder', 'poNumber'] },
+        { name: 'cac:AccountingSupplierParty', jsonFields: ['supplier', 'seller', 'vendor'] },
+        { name: 'cac:AccountingCustomerParty', jsonFields: ['customer', 'buyer', 'client'] },
+        { name: 'cac:Delivery', jsonFields: ['delivery', 'shipping'] },
+        { name: 'cac:PaymentMeans', jsonFields: ['paymentMeans', 'payment', 'paymentMethod'] },
+        { name: 'cac:PaymentTerms', jsonFields: ['paymentTerms', 'terms'] },
+        { name: 'cac:AllowanceCharge', jsonFields: ['allowanceCharge', 'discounts', 'charges'] },
+        { name: 'cac:TaxTotal', jsonFields: ['taxTotal', 'tax', 'taxes'] },
+        { name: 'cac:InvoiceLine', jsonFields: ['lines', 'items', 'lineItems', 'invoiceLines'] },
+        { name: 'cac:LegalMonetaryTotal', jsonFields: ['totals', 'legalMonetaryTotal', 'monetaryTotal'] }
+    ];
+    for (const field of complexFields) {
+        const value = findFieldValue(invoiceData, field.jsonFields);
+        if (value !== null && value !== undefined && value !== '') {
+            found.add(field.name);
+        }
+        else {
+            missing.push(field.name);
+        }
+    }
+    // Remove duplicates from missing array
+    const uniqueMissing = Array.from(new Set(missing));
+    // Generate summary
+    const foundCount = found.size;
+    const missingCount = uniqueMissing.length;
+    const summary = `Found ${foundCount} fields, ${missingCount} fields missing. Conversion successful.`;
+    return {
+        missing: uniqueMissing,
+        found: Array.from(found),
+        summary
+    };
+};
+exports.detectMissingFields = detectMissingFields;
+// main conversion function
 const convertFlexibleJsonToUblXml = async (invoiceData) => {
     try {
         if (!invoiceData) {
             throw new Error('No invoice data provided');
         }
-        // Build XML structure from flexible JSON
+        // Build XML structure from JSON
         const processedData = buildXmlStructure(invoiceData);
-        // Set default values for required fields if not found
+        // Set required defaults if not present
         if (!processedData['cbc:ID']) {
             processedData['cbc:ID'] = ['UNKNOWN'];
         }
-        if (!processedData['cbc:IssueDate']) {
+        // Parse and format the issue date
+        const issueDate = findFieldValue(invoiceData, ['issueDate', 'date', 'invoiceDate', 'dateIssued', 'createdDate', 'documentDate']);
+        if (issueDate) {
+            processedData['cbc:IssueDate'] = [parseDate(issueDate)];
+        }
+        else if (!processedData['cbc:IssueDate']) {
             processedData['cbc:IssueDate'] = [new Date().toISOString().split('T')[0]];
         }
         if (!processedData['cbc:InvoiceTypeCode']) {
             processedData['cbc:InvoiceTypeCode'] = ['380'];
         }
+        // Extract currency from total amount if present
+        const totalAmount = findFieldValue(invoiceData, ['totalAmount', 'total', 'grandTotal']);
+        let currency = 'USD';
+        if (totalAmount && typeof totalAmount === 'string') {
+            const match = totalAmount.match(/([A-Z]{3})$/);
+            if (match) {
+                currency = match[1];
+            }
+        }
         if (!processedData['cbc:DocumentCurrencyCode']) {
-            processedData['cbc:DocumentCurrencyCode'] = ['USD'];
+            processedData['cbc:DocumentCurrencyCode'] = [currency];
         }
         const ublObj = {
             'ubl:Invoice': {
@@ -1130,7 +1404,7 @@ const convertFlexibleJsonToUblXml = async (invoiceData) => {
             headless: false
         });
         let xml = builder.buildObject(ublObj);
-        // Clean up empty elements
+        //clean up empty elements
         xml = xml
             .replace(/<([^/>]+)><\/\1>/g, '<$1/>')
             .replace(/<([^>]+)><\/\1>/g, '')

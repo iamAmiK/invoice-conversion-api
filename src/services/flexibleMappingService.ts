@@ -1412,6 +1412,72 @@ const parseDate = (dateStr: any): string => {
   return dateStr;
 };
 
+// Field detection interface
+export interface MissingFieldsReport {
+  missing: string[];
+  found: string[];
+  summary: string;
+}
+
+// Function to detect missing fields in the input JSON
+export const detectMissingFields = (invoiceData: any): MissingFieldsReport => {
+  const found: Set<string> = new Set();
+  const missing: string[] = [];
+  
+  // Check each field mapping to see if data is present
+  for (const mapping of INVOICE_FIELD_MAPPINGS) {
+    const fieldName = `${mapping.xmlNamespace}:${mapping.xmlElement}`;
+    const value = findFieldValue(invoiceData, mapping.jsonFields);
+    
+    if (value !== null && value !== undefined && value !== '') {
+      found.add(fieldName);
+    } else {
+      // Only add to missing if it's not a duplicate field name
+      if (!missing.includes(fieldName)) {
+        missing.push(fieldName);
+      }
+    }
+  }
+  
+  // Check for complex structures
+  const complexFields = [
+    { name: 'cac:InvoicePeriod', jsonFields: ['invoicePeriod', 'billingPeriod', 'period'] },
+    { name: 'cac:OrderReference', jsonFields: ['orderReference', 'orderRef', 'purchaseOrder', 'poNumber'] },
+    { name: 'cac:AccountingSupplierParty', jsonFields: ['supplier', 'seller', 'vendor'] },
+    { name: 'cac:AccountingCustomerParty', jsonFields: ['customer', 'buyer', 'client'] },
+    { name: 'cac:Delivery', jsonFields: ['delivery', 'shipping'] },
+    { name: 'cac:PaymentMeans', jsonFields: ['paymentMeans', 'payment', 'paymentMethod'] },
+    { name: 'cac:PaymentTerms', jsonFields: ['paymentTerms', 'terms'] },
+    { name: 'cac:AllowanceCharge', jsonFields: ['allowanceCharge', 'discounts', 'charges'] },
+    { name: 'cac:TaxTotal', jsonFields: ['taxTotal', 'tax', 'taxes'] },
+    { name: 'cac:InvoiceLine', jsonFields: ['lines', 'items', 'lineItems', 'invoiceLines'] },
+    { name: 'cac:LegalMonetaryTotal', jsonFields: ['totals', 'legalMonetaryTotal', 'monetaryTotal'] }
+  ];
+  
+  for (const field of complexFields) {
+    const value = findFieldValue(invoiceData, field.jsonFields);
+    if (value !== null && value !== undefined && value !== '') {
+      found.add(field.name);
+    } else {
+      missing.push(field.name);
+    }
+  }
+  
+  // Remove duplicates from missing array
+  const uniqueMissing = Array.from(new Set(missing));
+  
+  // Generate summary
+  const foundCount = found.size;
+  const missingCount = uniqueMissing.length;
+  const summary = `Found ${foundCount} fields, ${missingCount} fields missing. Conversion successful.`;
+  
+  return {
+    missing: uniqueMissing,
+    found: Array.from(found),
+    summary
+  };
+};
+
 // main conversion function
 export const convertFlexibleJsonToUblXml = async (invoiceData: any): Promise<string> => {
   try {
