@@ -2,6 +2,7 @@ import express, { Application, Request, Response, NextFunction } from 'express';
 import { json, urlencoded } from 'body-parser';
 import { errorHandler } from './middleware/errorHandler';
 import { convertRouter } from './routes/convert';
+import { fixRouter } from './routes/fix';
 
 class App {
   public app: Application;
@@ -20,6 +21,7 @@ class App {
 
   private initializeRoutes(): void {
     this.app.use('/api/convert', convertRouter);
+    this.app.use('/api/fix', fixRouter);
     
     // Health check endpoint
     this.app.get('/health', (req: Request, res: Response) => {

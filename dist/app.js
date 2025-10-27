@@ -7,6 +7,7 @@ const express_1 = __importDefault(require("express"));
 const body_parser_1 = require("body-parser");
 const errorHandler_1 = require("./middleware/errorHandler");
 const convert_1 = require("./routes/convert");
+const fix_1 = require("./routes/fix");
 class App {
     constructor() {
         this.app = (0, express_1.default)();
@@ -20,6 +21,7 @@ class App {
     }
     initializeRoutes() {
         this.app.use('/api/convert', convert_1.convertRouter);
+        this.app.use('/api/fix', fix_1.fixRouter);
         // Health check endpoint
         this.app.get('/health', (req, res) => {
             res.status(200).json({ status: 'ok' });

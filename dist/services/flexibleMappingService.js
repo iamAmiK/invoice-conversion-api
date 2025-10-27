@@ -1,9 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.convertFlexibleJsonToUblXml = exports.detectMissingFields = void 0;
+exports.convertFlexibleJsonToUblXml = exports.detectMissingFields = exports.INVOICE_FIELD_MAPPINGS = void 0;
 const xml2js_1 = require("xml2js");
 // mapping for invoice data
-const INVOICE_FIELD_MAPPINGS = [
+exports.INVOICE_FIELD_MAPPINGS = [
     {
         xmlElement: 'UBLVersionID',
         xmlNamespace: 'cbc',
@@ -519,7 +519,7 @@ const extractAttributes = (obj, searchFields) => {
 const buildXmlStructure = (jsonData) => {
     const result = {};
     // Extract basic invoice fields
-    for (const mapping of INVOICE_FIELD_MAPPINGS) {
+    for (const mapping of exports.INVOICE_FIELD_MAPPINGS) {
         const value = findFieldValue(jsonData, mapping.jsonFields);
         if (value !== null && value !== undefined && value !== '') {
             const attributes = extractAttributes(jsonData, mapping.jsonFields);
@@ -1302,7 +1302,7 @@ const detectMissingFields = (invoiceData) => {
     const found = new Set();
     const missing = [];
     // Check each field mapping to see if data is present
-    for (const mapping of INVOICE_FIELD_MAPPINGS) {
+    for (const mapping of exports.INVOICE_FIELD_MAPPINGS) {
         const fieldName = `${mapping.xmlNamespace}:${mapping.xmlElement}`;
         const value = findFieldValue(invoiceData, mapping.jsonFields);
         if (value !== null && value !== undefined && value !== '') {

@@ -9,7 +9,7 @@ interface FieldMapping {
 }
 
 // mapping for invoice data
-const INVOICE_FIELD_MAPPINGS: FieldMapping[] = [
+export const INVOICE_FIELD_MAPPINGS: FieldMapping[] = [
   {
     xmlElement: 'UBLVersionID',
     xmlNamespace: 'cbc',
