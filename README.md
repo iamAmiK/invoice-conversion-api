@@ -13,4 +13,5 @@ Task 3: Make route for /Fix (adjustments for missing fields) #Done
 Note: I'm not using any storage in temp/cache (bcz of security issues) nor any services (cost issues)
 
 ### Status currently DONE - todo check db for AI implementation (RAG / Semantic Search) - Supabase
+
 Later: Scope for different invoice procurements from PDF to JSON
