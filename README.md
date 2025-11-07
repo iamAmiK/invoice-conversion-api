@@ -17,3 +17,5 @@ Note: I'm not using any storage in temp/cache (bcz of security issues) nor any s
 ### For now - check db for AI implementation (RAG / Semantic Search) - Supabase
 
 Later: Scope for different invoice procurements from PDF to JSON
+
+n8n, airtable, supabase, rag, semantic search
