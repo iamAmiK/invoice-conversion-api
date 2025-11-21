@@ -20,4 +20,5 @@ Later: Scope for different invoice procurements from PDF to JSON
 
 n8n, airtable, supabase, rag, semantic search
 
-Created n8n acccount, fix nodes to properly connect with Supabase table and call data. Message Muhammad when it works.
+Completed n8n workflow (currently full working):
+https://amitabhk.app.n8n.cloud/workflow/PcHKtMiM0O7cyJhL
