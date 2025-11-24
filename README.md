@@ -20,5 +20,5 @@ Later: Scope for different invoice procurements from PDF to JSON
 
 n8n, airtable, supabase, rag, semantic search
 
-Completed n8n workflow (currently full working):
+Completed n8n workflow (currently fully working):
 https://amitabhk.app.n8n.cloud/workflow/PcHKtMiM0O7cyJhL
