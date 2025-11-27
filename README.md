@@ -22,3 +22,5 @@ n8n, airtable, supabase, rag, semantic search
 
 Completed n8n workflow (currently fully working):
 https://amitabhk.app.n8n.cloud/workflow/PcHKtMiM0O7cyJhL
+
+Upload n8n workflow json file
