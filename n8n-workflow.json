@@ -1,0 +1,179 @@
+{
+  "name": "Supabase Database Command Reader and Query Executor",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "id": "d61a14e2-7b36-46f4-bd5a-553b3eb44e52",
+      "name": "When chat message received",
+      "webhookId": "b6fe52aa-ed7c-482a-ba07-0c902935acf3"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT column_name\nFROM information_schema.columns\nWHERE table_name = 'api_full_details';",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        208,
+        0
+      ],
+      "id": "01a251f2-83c9-443d-89ec-704e6941cb70",
+      "name": "Execute a SQL query",
+      "credentials": {
+        "postgres": {
+          "id": "3n5mbwsAG4tV1h0O",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// For n8n v1+ \"Code\" node\nconst inputData = $input.all().map(item => item.json);\n\nif (!inputData.length) {\n  return [{ json: { markdown: '' } }];\n}\n\nconst headers = Object.keys(inputData[0]);\nconst headerRow = `| ${headers.join(' | ')} |`;\nconst separatorRow = `| ${headers.map(() => '---').join(' | ')} |`;\nconst dataRows = inputData.map(row =>\n  `| ${headers.map(col => String(row[col])).join(' | ')} |`\n);\n\nconst markdownTable = [headerRow, separatorRow, ...dataRows].join('\\n');\n\nreturn [{ json: { markdown: markdownTable } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        416,
+        0
+      ],
+      "id": "a2b30d8b-dc64-4f38-a8ea-0e161b28a77a",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an expert PostgreSQL SQL Agent. Your role is to help users query their database by converting natural language questions into accurate SQL queries and executing them.\n\nUser Question: {{ $('When chat message received').first().json.chatInput }}\n\n## Your Database Schema\nYou have access to the following database columns in the 'api_full_details' schema:\n{{ $('Code in JavaScript').first().json.markdown }}\n\nBased on the user's question and the schema, generate a valid SQL query to retrieve the requested information. Then, execute the query and return the results in a clear and concise format.\n\nAction:\nUpdate your SQL query in the n8n node to the following:\n\nNote: For example like the following query (make it lower for case-sensitivity):\nSELECT api_name FROM api_full_details WHERE LOWER(input_formats::text) LIKE LOWER('%True%');\nThis will allow Postgres to treat the JSON array as a text string for the purpose of the LIKE search.",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        624,
+        0
+      ],
+      "id": "203e8f08-5e77-4d36-9c5e-b5f9498acf76",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Excute a SQL query in Postgres",
+        "operation": "executeQuery",
+        "query": "{{ $fromAI('sql_query') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgresTool",
+      "typeVersion": 2.6,
+      "position": [
+        784,
+        208
+      ],
+      "id": "225b3635-aabd-4bee-84a3-71bb9311b35c",
+      "name": "Execute a SQL query in Postgres",
+      "credentials": {
+        "postgres": {
+          "id": "3n5mbwsAG4tV1h0O",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        496,
+        208
+      ],
+      "id": "3f0f9e49-4ac8-4020-87b6-063968707179",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "9Vi6dAYssKep75OD",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query in Postgres": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "c89d00aa-b9da-4f6f-a04f-4044bbaaf84e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5e42613272eca750838d852fb36e57f3f9d79ff577a5feb3a538cc32404a45c5"
+  },
+  "id": "PcHKtMiM0O7cyJhL",
+  "tags": []
+}
